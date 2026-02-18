@@ -32,8 +32,8 @@
 		139E2D592F45DD6B006841E1 = {
 			isa = PBXGroup;
 			children = (
-				139E2D642F45DD6B006841E1 /* CryptoTrackerApp */,
 				139E2D632F45DD6B006841E1 /* Products */,
+				139E2D642F45DD6B006841E1 /* CryptoTrackerApp */,
 			);
 			sourceTree = "<group>";
 		};
