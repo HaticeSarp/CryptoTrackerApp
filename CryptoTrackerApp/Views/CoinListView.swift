@@ -30,6 +30,8 @@ struct CoinListView: View {
                             
                             Text(coin.name)
                         }
+                    }.refreshable {
+                        await viewModel.fetchCoins()
                     }
                 }
             }
