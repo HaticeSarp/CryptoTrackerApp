@@ -27,10 +27,14 @@ struct CoinListView: View {
                                 ProgressView()
                             }
                             .frame(width: 40, height: 40)
+                            
+                            Text(coin.name)
                         }
                     }
                 }
             }
+        }.task {
+            await viewModel.fetchCoins()
         }
     }
 }
