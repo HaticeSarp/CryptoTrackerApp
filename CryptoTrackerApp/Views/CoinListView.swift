@@ -28,8 +28,29 @@ struct CoinListView: View {
                             }
                             .frame(width: 40, height: 40)
                             
-                            Text(coin.name)
-                        }
+                            VStack(alignment: .leading ) {
+                                Text(coin.name)
+                                    .font(.headline)
+                                
+                                Text(coin.symbol.uppercased())
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            
+                            Spacer()
+                            
+                            VStack(alignment: .trailing ) {
+                                Text("$\(coin.currentPrice, specifier: "%.2f")")
+                                    .font(.headline)
+                                
+                                if let change = coin.priceChangePercentage24H {
+                                            Text("\(change, specifier: "%.2f")%")
+                                                .font(.caption)
+                                                .foregroundStyle(change >= 0 ? .green : .red)
+                                        }
+                            }
+                    
+                        }.padding(.vertical,4)
                     }.refreshable {
                         await viewModel.fetchCoins()
                     }
