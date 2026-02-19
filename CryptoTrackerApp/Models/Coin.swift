@@ -20,6 +20,6 @@ struct Coin: Identifiable, Codable {
         case symbol
         case image
         case currentPrice = "current_price"
-        case priceChangePercentage24H = "price_change_percentage_24h"
+        case priceChangePercentage24H = "price_change_percentage_24h"
     }
 }

@@ -5,6 +5,7 @@
 //  Created by Hatice Sarp on 18.02.2026.
 //
 import Foundation
+import Combine
 
 @MainActor
 final class CoinListViewModel: ObservableObject{
