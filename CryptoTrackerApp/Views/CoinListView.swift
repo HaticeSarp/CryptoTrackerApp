@@ -25,7 +25,11 @@ struct CoinListView: View {
                             .foregroundStyle(.red)
                     } else {
                         ForEach(viewModel.coins) { coin in
-                            coinRow(for: coin)
+                            NavigationLink{
+                                CoinDetailView(coin: coin)
+                            } label : {
+                                coinRow(for: coin)
+                            }
                         }
                     }
                 }
