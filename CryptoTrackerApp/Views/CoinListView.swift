@@ -17,9 +17,17 @@ struct CoinListView: View {
                     Text("24h Change").tag(SortOption.change)
                     Text("Name").tag(SortOption.name)
                 }
+                .pickerStyle(.segmented)
+                .padding(.horizontal)
                 List{
                     if viewModel.isLoading {
-                        ProgressView("Loading...") }
+                        ForEach(0..<8, id: \.self) { _ in
+                            coinRow(for: mockCoin)
+                                .redacted(reason: .placeholder)
+                                .listRowSeparator(.hidden)
+                                .listRowBackground(Color.clear)
+                        }
+                    }
                     else if let error = viewModel.errorMessage {
                         Text(error)
                             .foregroundStyle(.red)
@@ -30,9 +38,14 @@ struct CoinListView: View {
                             } label : {
                                 coinRow(for: coin)
                             }
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                         }
                     }
                 }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color(.systemGroupedBackground))
                 .refreshable {
                     await viewModel.fetchCoins()
                 }
@@ -78,12 +91,26 @@ private func coinRow(for coin: Coin) -> some View {
                     .padding(.vertical, 3)
                     .background(change >= 0 ? Color.green.opacity(0.2) : Color.red.opacity(0.2))
                     .foregroundStyle(change >= 0 ? .green : .red)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .clipShape(Capsule())
             }
         }
     }
     .padding(.vertical,4)
+    .background(
+        RoundedRectangle(cornerRadius: 16)
+            .fill(Color(.systemGray6))
+    )
+    .padding(.horizontal)
 }
+
+private let mockCoin = Coin(
+    id: "mock",
+    name: "Bitcoin",
+    symbol: "btc",
+    image: "",
+    currentPrice: 0,
+    priceChangePercentage24H: 0
+)
 
 #Preview {
     CoinListView()
