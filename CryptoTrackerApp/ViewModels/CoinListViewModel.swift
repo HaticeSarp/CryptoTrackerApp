@@ -20,7 +20,11 @@ final class CoinListViewModel: ObservableObject{
     @Published var coins: [Coin] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
-    @Published var sortOption: SortOption = .priceDescending
+    @Published var sortOption: SortOption = .priceDescending{
+        didSet{
+            sortCoins()
+        }
+    }
 
     private let service = CoinService()
     
@@ -30,6 +34,7 @@ final class CoinListViewModel: ObservableObject{
         
         do {
             self.coins = try await service.fetchCoins()
+            sortCoins()
         } catch {
             self.errorMessage = "Failed to fetch coins."
         }
