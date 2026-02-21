@@ -60,6 +60,13 @@ struct CoinListView: View {
 @ViewBuilder
 private func coinRow(for coin: Coin) -> some View {
     HStack(spacing: 12) {
+        if let rank = coin.marketCapRank {
+            Text("#\(rank)")
+                .font(.caption)
+                .fontWeight(.bold)
+                .foregroundStyle(.secondary)
+                .frame(width: 35)
+        }
         AsyncImage(url: URL(string: coin.image)) { image in
             image
                 .resizable()
@@ -93,6 +100,12 @@ private func coinRow(for coin: Coin) -> some View {
                     .foregroundStyle(change >= 0 ? .green : .red)
                     .clipShape(Capsule())
             }
+            
+            if let marketCap = coin.marketCap {
+                Text("MCap: \(formatMarketCap(marketCap))")
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
         }
     }
     .padding(.vertical,4)
@@ -103,13 +116,29 @@ private func coinRow(for coin: Coin) -> some View {
     .padding(.horizontal)
 }
 
+private func formatMarketCap(_ value: Double) -> String {
+    let trillion = value / 1_000_000_000_000
+    let billion = value / 1_000_000_000
+    let million = value / 1_000_000
+    
+    if trillion >= 1 {
+        return String(format: "%.2fT", trillion)
+    } else if billion >= 1 {
+        return String(format: "%.2fB", billion)
+    } else {
+        return String(format: "%.2fM", million)
+    }
+}
+
 private let mockCoin = Coin(
     id: "mock",
     name: "Bitcoin",
     symbol: "btc",
     image: "",
     currentPrice: 0,
-    priceChangePercentage24H: 0
+    priceChangePercentage24H: 0,
+    marketCap: 0,
+    marketCapRank: 1
 )
 
 #Preview {
