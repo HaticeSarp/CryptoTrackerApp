@@ -20,6 +20,7 @@ final class CoinListViewModel: ObservableObject{
     @Published var coins: [Coin] = []
     @Published var isLoading: Bool = false
     @Published var errorMessage: String?
+    @Published var searchText: String = ""
     @Published var sortOption: SortOption = .priceDescending{
         didSet{
             sortCoins()
@@ -27,6 +28,17 @@ final class CoinListViewModel: ObservableObject{
     }
 
     private let service = CoinService()
+    
+    var filteredCoins : [Coin] {
+        if searchText.isEmpty {
+            return coins
+        } else {
+            return coins.filter {
+                      $0.name.localizedCaseInsensitiveContains(searchText) ||
+                      $0.symbol.localizedCaseInsensitiveContains(searchText)
+                  }
+        }
+    }
     
     func fetchCoins() async {
         isLoading = true

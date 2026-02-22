@@ -31,8 +31,18 @@ struct CoinListView: View {
                     else if let error = viewModel.errorMessage {
                         Text(error)
                             .foregroundStyle(.red)
-                    } else {
-                        ForEach(viewModel.coins) { coin in
+                    }
+                    else if viewModel.filteredCoins.isEmpty && !viewModel.searchText.isEmpty {
+                        ContentUnavailableView(
+                                  "No Results",
+                                  systemImage: "magnifyingglass",
+                                  description: Text("Try searching for another coin.")
+                              )
+                              .listRowSeparator(.hidden)
+                              .listRowBackground(Color.clear)
+                    }
+                    else {
+                        ForEach(viewModel.filteredCoins) { coin in
                             NavigationLink{
                                 CoinDetailView(coin: coin)
                             } label : {
@@ -51,7 +61,9 @@ struct CoinListView: View {
                 }
             }
             .navigationTitle("Crypto Tracker")
-        }.task {
+        }
+        .searchable(text: $viewModel.searchText, prompt: "Search coin...")
+        .task {
             await viewModel.fetchCoins()
         }
     }
