@@ -40,6 +40,14 @@ final class CoinListViewModel: ObservableObject{
         }
     }
     
+    var topMovers: [Coin] {
+        coins
+            .filter { ($0.priceChangePercentage24H ?? 0) > 0 }
+            .sorted { ($0.priceChangePercentage24H ?? 0) > ($1.priceChangePercentage24H ?? 0) }
+            .prefix(5)
+            .map { $0 }
+    }
+    
     func fetchCoins() async {
         isLoading = true
         errorMessage = nil

@@ -17,6 +17,10 @@ struct CoinListView: View {
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
                 
+                if !viewModel.topMovers.isEmpty {
+                    TopMoversView(coins: viewModel.topMovers)
+                }
+                
                 // MARK: - Content
                 contentView
             }
