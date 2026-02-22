@@ -99,6 +99,13 @@ private extension CoinListView {
                 } label: {
                     coinRow(for: coin)
                 }
+                .onAppear {
+                    if coin.id == viewModel.filteredCoins.last?.id {
+                         Task {
+                             await viewModel.fetchCoins()
+                         }
+                     }
+                 }
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             }
@@ -107,7 +114,7 @@ private extension CoinListView {
         .scrollContentBackground(.hidden)
         .background(Color(.systemGroupedBackground))
         .refreshable {
-            await viewModel.fetchCoins()
+            await viewModel.fetchCoins(reset: true)
         }
     }
 }

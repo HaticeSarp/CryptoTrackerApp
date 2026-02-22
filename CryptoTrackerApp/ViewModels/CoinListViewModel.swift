@@ -26,7 +26,9 @@ final class CoinListViewModel: ObservableObject{
             sortCoins()
         }
     }
-
+    @Published var isLoadingMore = false
+    private var currentPage = 1
+    private var canLoadMore = true
     private let service = CoinService()
     
     var filteredCoins : [Coin] {
@@ -48,20 +50,35 @@ final class CoinListViewModel: ObservableObject{
             .map { $0 }
     }
     
-    func fetchCoins() async {
-        isLoading = true
-        errorMessage = nil
-        
-        do {
-            self.coins = try await service.fetchCoins()
-            sortCoins()
-        } catch {
-            self.errorMessage = "Failed to fetch coins."
+    @MainActor
+    func fetchCoins(reset: Bool = false) async {
+        if reset {
+            currentPage = 1
+            canLoadMore = true
+            coins = []
         }
         
-        isLoading = false
+        guard !isLoadingMore, canLoadMore else { return }
+        
+        isLoadingMore = true
+        
+        do {
+            let newCoins = try await service.fetchCoins(page: currentPage)
+            
+            if newCoins.isEmpty {
+                canLoadMore = false
+            } else {
+                coins.append(contentsOf: newCoins)
+                currentPage += 1
+            }
+            
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        
+        isLoadingMore = false
     }
-
+    
     func sortCoins() {
         switch sortOption {
         case .price:
