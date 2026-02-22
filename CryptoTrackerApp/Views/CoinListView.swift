@@ -1,17 +1,14 @@
-//
-//  CoinListView.swift
-//  CryptoTrackerApp
-//
-//  Created by Hatice Sarp on 18.02.2026.
-//
 import SwiftUI
 
 struct CoinListView: View {
     @StateObject private var viewModel = CoinListViewModel()
+    
     var body: some View {
         NavigationStack {
-            VStack{
-                Picker("Sort", selection: $viewModel.sortOption){
+            VStack {
+                
+                // MARK: - Sort Picker
+                Picker("Sort", selection: $viewModel.sortOption) {
                     Text("Price ↑").tag(SortOption.price)
                     Text("Price ↓").tag(SortOption.priceDescending)
                     Text("24h Change").tag(SortOption.change)
@@ -19,46 +16,9 @@ struct CoinListView: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
-                List{
-                    if viewModel.isLoading {
-                        ForEach(0..<8, id: \.self) { _ in
-                            coinRow(for: mockCoin)
-                                .redacted(reason: .placeholder)
-                                .listRowSeparator(.hidden)
-                                .listRowBackground(Color.clear)
-                        }
-                    }
-                    else if let error = viewModel.errorMessage {
-                        Text(error)
-                            .foregroundStyle(.red)
-                    }
-                    else if viewModel.filteredCoins.isEmpty && !viewModel.searchText.isEmpty {
-                        ContentUnavailableView(
-                                  "No Results",
-                                  systemImage: "magnifyingglass",
-                                  description: Text("Try searching for another coin.")
-                              )
-                              .listRowSeparator(.hidden)
-                              .listRowBackground(Color.clear)
-                    }
-                    else {
-                        ForEach(viewModel.filteredCoins) { coin in
-                            NavigationLink{
-                                CoinDetailView(coin: coin)
-                            } label : {
-                                coinRow(for: coin)
-                            }
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                        }
-                    }
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .background(Color(.systemGroupedBackground))
-                .refreshable {
-                    await viewModel.fetchCoins()
-                }
+                
+                // MARK: - Content
+                contentView
             }
             .navigationTitle("Crypto Tracker")
         }
@@ -69,9 +29,103 @@ struct CoinListView: View {
     }
 }
 
+// MARK: - Main Content Switch
+private extension CoinListView {
+    
+    @ViewBuilder
+    var contentView: some View {
+        
+        if viewModel.isLoading {
+            loadingView
+        }
+        
+        else if let error = viewModel.errorMessage {
+            centeredStateView(
+                title: "Something went wrong",
+                systemImage: "exclamationmark.triangle",
+                description: error
+            )
+        }
+        
+        else if viewModel.filteredCoins.isEmpty && !viewModel.searchText.isEmpty {
+            centeredStateView(
+                title: "No Results",
+                systemImage: "magnifyingglass",
+                description: "Try searching for another coin."
+            )
+        }
+        
+        else {
+            coinListView
+        }
+    }
+}
+
+// MARK: - Loading View
+private extension CoinListView {
+    
+    var loadingView: some View {
+        List {
+            ForEach(0..<8, id: \.self) { _ in
+                coinRow(for: mockCoin)
+                    .redacted(reason: .placeholder)
+                    .listRowSeparator(.hidden)
+                    .listRowBackground(Color.clear)
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color(.systemGroupedBackground))
+    }
+}
+
+// MARK: - Normal List
+private extension CoinListView {
+    
+    var coinListView: some View {
+        List {
+            ForEach(viewModel.filteredCoins) { coin in
+                NavigationLink {
+                    CoinDetailView(coin: coin)
+                } label: {
+                    coinRow(for: coin)
+                }
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            }
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color(.systemGroupedBackground))
+        .refreshable {
+            await viewModel.fetchCoins()
+        }
+    }
+}
+
+// MARK: - Centered State View
+private extension CoinListView {
+    
+    func centeredStateView(title: String,
+                           systemImage: String,
+                           description: String) -> some View {
+        VStack {
+            Spacer()
+            ContentUnavailableView(
+                title,
+                systemImage: systemImage,
+                description: Text(description)
+            )
+            Spacer()
+        }
+    }
+}
+
+// MARK: - Coin Row
 @ViewBuilder
 private func coinRow(for coin: Coin) -> some View {
     HStack(spacing: 12) {
+        
         if let rank = coin.marketCapRank {
             Text("#\(rank)")
                 .font(.caption)
@@ -79,6 +133,7 @@ private func coinRow(for coin: Coin) -> some View {
                 .foregroundStyle(.secondary)
                 .frame(width: 35)
         }
+        
         AsyncImage(url: URL(string: coin.image)) { image in
             image
                 .resizable()
@@ -88,7 +143,7 @@ private func coinRow(for coin: Coin) -> some View {
         }
         .frame(width: 40, height: 40)
         
-        VStack(alignment: .leading ) {
+        VStack(alignment: .leading) {
             Text(coin.name)
                 .font(.headline)
             
@@ -100,6 +155,7 @@ private func coinRow(for coin: Coin) -> some View {
         Spacer()
         
         VStack(alignment: .trailing, spacing: 4) {
+            
             Text("$\(coin.currentPrice, specifier: "%.2f")")
                 .font(.headline)
             
@@ -120,7 +176,7 @@ private func coinRow(for coin: Coin) -> some View {
             }
         }
     }
-    .padding(.vertical,4)
+    .padding(.vertical, 4)
     .background(
         RoundedRectangle(cornerRadius: 16)
             .fill(Color(.systemGray6))
@@ -128,6 +184,7 @@ private func coinRow(for coin: Coin) -> some View {
     .padding(.horizontal)
 }
 
+// MARK: - Helpers
 private func formatMarketCap(_ value: Double) -> String {
     let trillion = value / 1_000_000_000_000
     let billion = value / 1_000_000_000
@@ -156,4 +213,3 @@ private let mockCoin = Coin(
 #Preview {
     CoinListView()
 }
-
