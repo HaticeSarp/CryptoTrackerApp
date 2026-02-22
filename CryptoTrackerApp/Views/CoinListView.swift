@@ -17,8 +17,13 @@ struct CoinListView: View {
                 .pickerStyle(.segmented)
                 .padding(.horizontal)
                 
-                if !viewModel.topMovers.isEmpty {
-                    TopMoversView(coins: viewModel.topMovers)
+                if !viewModel.topMovers.isEmpty && viewModel.searchText.isEmpty {
+                    Section {
+                        TopMoversView(coins: viewModel.topMovers)
+                            .listRowInsets(EdgeInsets())
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    }
                 }
                 
                 // MARK: - Content
