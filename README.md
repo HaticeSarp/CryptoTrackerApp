@@ -81,7 +81,5 @@ This project was created to practice:
 - Error and loading state handling
 
 ## 👩‍💻 Author
-Hatice Kapkıner
-iOS Developer
-**Hatice Sarp**  
+**Hatice Kapkıner**
 iOS Developer
