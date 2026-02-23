@@ -2,154 +2,98 @@ import SwiftUI
 
 struct CoinListView: View {
     @StateObject private var viewModel = CoinListViewModel()
-    
+
     var body: some View {
         NavigationStack {
-            VStack {
-                
-                // MARK: - Sort Picker
-                Picker("Sort", selection: $viewModel.sortOption) {
-                    Text("Price ↑").tag(SortOption.price)
-                    Text("Price ↓").tag(SortOption.priceDescending)
-                    Text("24h Change").tag(SortOption.change)
-                    Text("Name").tag(SortOption.name)
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal)
-                
-                if !viewModel.topMovers.isEmpty && viewModel.searchText.isEmpty {
-                    Section {
-                        TopMoversView(coins: viewModel.topMovers)
-                            .listRowInsets(EdgeInsets())
-                            .listRowSeparator(.hidden)
-                            .listRowBackground(Color.clear)
-                    }
-                }
-                
-                // MARK: - Content
+            VStack(spacing: 0) {
+                SortPicker(selection: $viewModel.sortOption)
+                topMoversSection
                 contentView
             }
             .navigationTitle("Crypto Tracker")
         }
         .searchable(text: $viewModel.searchText, prompt: "Search coin...")
-        .task {
-            await viewModel.fetchCoins()
+        .task { await viewModel.fetchCoins() }
+    }
+
+    @ViewBuilder
+    private var topMoversSection: some View {
+        if !viewModel.topMovers.isEmpty && viewModel.searchText.isEmpty {
+            TopMoversView(coins: viewModel.topMovers)
+                .listRowInsets(EdgeInsets())
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
         }
     }
-}
 
-// MARK: - Main Content Switch
-private extension CoinListView {
-    
     @ViewBuilder
-    var contentView: some View {
-        
+    private var contentView: some View {
         if viewModel.isLoading {
-            loadingView
-        }
-        
-        else if let error = viewModel.errorMessage, viewModel.coins.isEmpty {
-            errorStateView(description: error)
-        }
-        
-        else if viewModel.filteredCoins.isEmpty && !viewModel.searchText.isEmpty {
-            centeredStateView(
+            CoinListLoadingView(showLoadingMore: viewModel.isLoadingMore)
+        } else if let error = viewModel.errorMessage, viewModel.coins.isEmpty {
+            CoinListErrorView(description: error) {
+                await viewModel.fetchCoins(reset: true)
+            }
+        } else if viewModel.filteredCoins.isEmpty && !viewModel.searchText.isEmpty {
+            EmptyStateView(
                 title: "No Results",
                 systemImage: "magnifyingglass",
                 description: "Try searching for another coin."
             )
+        } else {
+            CoinListContentView(viewModel: viewModel)
         }
-        
-        else {
-            coinListView
+    }
+}
+
+// MARK: - Sort Picker
+
+private struct SortPicker: View {
+    @Binding var selection: SortOption
+
+    var body: some View {
+        Picker("Sort", selection: $selection) {
+            Text("Price ↑").tag(SortOption.price)
+            Text("Price ↓").tag(SortOption.priceDescending)
+            Text("24h Change").tag(SortOption.change)
+            Text("Name").tag(SortOption.name)
         }
+        .pickerStyle(.segmented)
+        .padding(.horizontal)
     }
 }
 
 // MARK: - Loading View
-private extension CoinListView {
-    
-    var loadingView: some View {
+private struct CoinListLoadingView: View {
+    let showLoadingMore: Bool
+
+    var body: some View {
         List {
             ForEach(0..<8, id: \.self) { _ in
-                coinRow(for: mockCoin)
+                CoinRowView(coin: .placeholder)
                     .redacted(reason: .placeholder)
                     .listRowSeparator(.hidden)
                     .listRowBackground(Color.clear)
             }
+            if showLoadingMore {
+                ForEach(0..<3, id: \.self) { _ in
+                    CoinRowView(coin: .placeholder)
+                        .redacted(reason: .placeholder)
+                        .listRowSeparator(.hidden)
+                        .listRowBackground(Color.clear)
+                }
+            }
         }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color(.systemGroupedBackground))
+        .modifier(CoinListStyle())
     }
 }
 
-// MARK: - Normal List
-private extension CoinListView {
-    
-    var coinListView: some View {
-        List {
-            ForEach(viewModel.filteredCoins) { coin in
-                NavigationLink {
-                    CoinDetailView(coin: coin)
-                } label: {
-                    coinRow(for: coin)
-                }
-                .onAppear {
-                    if coin.id == viewModel.filteredCoins.last?.id {
-                         Task {
-                             await viewModel.fetchCoins()
-                         }
-                     }
-                 }
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-            }
-            if let error = viewModel.errorMessage, !viewModel.coins.isEmpty {
-                HStack {
-                    Image(systemName: "exclamationmark.circle.fill")
-                        .foregroundStyle(.orange)
-                    Text(error)
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    Spacer()
-                }
-                .listRowSeparator(.hidden)
-                .listRowBackground(Color.clear)
-                .padding()
-            }
-            if viewModel.isLoadingMore {
-                HStack {
-                    Spacer()
-                    ProgressView()
-                    Spacer()
-                }
-                .listRowBackground(Color.clear)
-                .padding()
-            }
-            if viewModel.hasReachedEnd {
-                Text("You've seen all coins")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity)
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-                    .padding()
-            }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .background(Color(.systemGroupedBackground))
-        .refreshable {
-            await viewModel.fetchCoins(reset: true)
-        }
-    }
-}
+// MARK: - Error State View
+private struct CoinListErrorView: View {
+    let description: String
+    let retry: () async -> Void
 
-// MARK: - Error State View (supports pull-to-refresh and retry when initial load fails)
-private extension CoinListView {
-    
-    func errorStateView(description: String) -> some View {
+    var body: some View {
         ScrollView {
             VStack(spacing: 24) {
                 Spacer(minLength: 80)
@@ -159,9 +103,7 @@ private extension CoinListView {
                     description: Text(description)
                 )
                 Button("Retry") {
-                    Task {
-                        await viewModel.fetchCoins(reset: true)
-                    }
+                    Task { await retry() }
                 }
                 .buttonStyle(.borderedProminent)
                 Spacer(minLength: 80)
@@ -170,35 +112,135 @@ private extension CoinListView {
         }
         .scrollContentBackground(.hidden)
         .background(Color(.systemGroupedBackground))
-        .refreshable {
-            await viewModel.fetchCoins(reset: true)
+        .refreshable { await retry() }
+    }
+}
+
+// MARK: - Empty State View
+private struct EmptyStateView: View {
+    let title: String
+    let systemImage: String
+    let description: String
+
+    var body: some View {
+        VStack {
+            Spacer()
+            ContentUnavailableView(title, systemImage: systemImage, description: Text(description))
+            Spacer()
         }
     }
 }
 
-// MARK: - Centered State View
-private extension CoinListView {
-    
-    func centeredStateView(title: String,
-                           systemImage: String,
-                           description: String) -> some View {
-        VStack {
-            Spacer()
-            ContentUnavailableView(
-                title,
-                systemImage: systemImage,
-                description: Text(description)
+// MARK: - Coin List Content (main list + footer)
+private struct CoinListContentView: View {
+    @ObservedObject var viewModel: CoinListViewModel
+
+    var body: some View {
+        List {
+            ForEach(viewModel.filteredCoins) { coin in
+                NavigationLink {
+                    CoinDetailView(coin: coin)
+                } label: {
+                    CoinRowView(coin: coin)
+                }
+                .onAppear {
+                    if coin.id == viewModel.filteredCoins.last?.id {
+                        Task { await viewModel.fetchCoins() }
+                    }
+                }
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+            }
+            CoinListFooterView(
+                errorMessage: viewModel.errorMessage,
+                hasCoins: !viewModel.coins.isEmpty,
+                isLoadingMore: viewModel.isLoadingMore,
+                hasReachedEnd: viewModel.hasReachedEnd
             )
+        }
+        .modifier(CoinListStyle())
+        .refreshable { await viewModel.fetchCoins(reset: true) }
+    }
+}
+
+// MARK: - List Footer (error banner, loading, end message)
+private struct CoinListFooterView: View {
+    let errorMessage: String?
+    let hasCoins: Bool
+    let isLoadingMore: Bool
+    let hasReachedEnd: Bool
+
+    var body: some View {
+        Group {
+            if let error = errorMessage, hasCoins {
+                errorBanner(error)
+            }
+            if isLoadingMore {
+                loadingIndicator
+            }
+            if hasReachedEnd {
+                endOfListLabel
+            }
+        }
+    }
+
+    private func errorBanner(_ message: String) -> some View {
+        HStack {
+            Image(systemName: "exclamationmark.circle.fill")
+                .foregroundStyle(.orange)
+            Text(message)
+                .font(.caption)
+                .foregroundStyle(.secondary)
             Spacer()
         }
+        .listRowSeparator(.hidden)
+        .listRowBackground(Color.clear)
+        .padding()
+    }
+
+    private var loadingIndicator: some View {
+        HStack {
+            Spacer()
+            ProgressView()
+            Spacer()
+        }
+        .listRowBackground(Color.clear)
+        .padding()
+    }
+
+    private var endOfListLabel: some View {
+        Text("You've seen all coins")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .listRowBackground(Color.clear)
+            .listRowSeparator(.hidden)
+            .padding()
     }
 }
 
 // MARK: - Coin Row
-@ViewBuilder
-private func coinRow(for coin: Coin) -> some View {
-    HStack(spacing: 12) {
-        
+private struct CoinRowView: View {
+    let coin: Coin
+
+    var body: some View {
+        HStack(spacing: 12) {
+            rankLabel
+            coinImage
+            nameAndSymbol
+            Spacer()
+            priceAndChange
+        }
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 16)
+                .fill(Color(.systemGray6))
+        )
+        .padding(.horizontal)
+    }
+
+    @ViewBuilder
+    private var rankLabel: some View {
         if let rank = coin.marketCapRank {
             Text("#\(rank)")
                 .font(.caption)
@@ -206,32 +248,30 @@ private func coinRow(for coin: Coin) -> some View {
                 .foregroundStyle(.secondary)
                 .frame(width: 35)
         }
-        
+    }
+
+    private var coinImage: some View {
         AsyncImage(url: URL(string: coin.image)) { image in
-            image
-                .resizable()
-                .scaledToFit()
+            image.resizable().scaledToFit()
         } placeholder: {
             ProgressView()
         }
         .frame(width: 40, height: 40)
-        
+    }
+
+    private var nameAndSymbol: some View {
         VStack(alignment: .leading) {
-            Text(coin.name)
-                .font(.headline)
-            
+            Text(coin.name).font(.headline)
             Text(coin.symbol.uppercased())
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
-        
-        Spacer()
-        
+    }
+
+    private var priceAndChange: some View {
         VStack(alignment: .trailing, spacing: 4) {
-            
             Text("$\(coin.currentPrice, specifier: "%.2f")")
                 .font(.headline)
-            
             if let change = coin.priceChangePercentage24H {
                 Text("\(change, specifier: "%.2f")%")
                     .font(.caption)
@@ -241,48 +281,46 @@ private func coinRow(for coin: Coin) -> some View {
                     .foregroundStyle(change >= 0 ? .green : .red)
                     .clipShape(Capsule())
             }
-            
             if let marketCap = coin.marketCap {
-                Text("MCap: \(formatMarketCap(marketCap))")
+                Text("MCap: \(Self.formatMarketCap(marketCap))")
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
         }
     }
-    .padding(.vertical, 4)
-    .background(
-        RoundedRectangle(cornerRadius: 16)
-            .fill(Color(.systemGray6))
-    )
-    .padding(.horizontal)
-}
 
-// MARK: - Helpers
-private func formatMarketCap(_ value: Double) -> String {
-    let trillion = value / 1_000_000_000_000
-    let billion = value / 1_000_000_000
-    let million = value / 1_000_000
-    
-    if trillion >= 1 {
-        return String(format: "%.2fT", trillion)
-    } else if billion >= 1 {
-        return String(format: "%.2fB", billion)
-    } else {
+    private static func formatMarketCap(_ value: Double) -> String {
+        let trillion = value / 1_000_000_000_000
+        let billion = value / 1_000_000_000
+        let million = value / 1_000_000
+        if trillion >= 1 { return String(format: "%.2fT", trillion) }
+        if billion >= 1 { return String(format: "%.2fB", billion) }
         return String(format: "%.2fM", million)
     }
 }
 
-private let mockCoin = Coin(
-    id: "mock",
-    name: "Bitcoin",
-    symbol: "btc",
-    image: "",
-    currentPrice: 0,
-    priceChangePercentage24H: 0,
-    marketCap: 0,
-    marketCapRank: 1
-)
+// MARK: - Coin Placeholder
+private extension Coin {
+    static var placeholder: Coin {
+        Coin(
+            id: "mock",
+            name: "Bitcoin",
+            symbol: "btc",
+            image: "",
+            currentPrice: 0,
+            priceChangePercentage24H: 0,
+            marketCap: 0,
+            marketCapRank: 1
+        )
+    }
+}
 
-#Preview {
-    CoinListView()
+// MARK: - List Style Modifier
+private struct CoinListStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .listStyle(.plain)
+            .scrollContentBackground(.hidden)
+            .background(Color(.systemGroupedBackground))
+    }
 }
