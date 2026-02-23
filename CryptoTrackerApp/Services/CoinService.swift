@@ -6,10 +6,21 @@
 //
 import Foundation
 
-enum NetworkError: Error {
+enum NetworkError: LocalizedError {
     case invalidURL
     case invalidResponse
     case decodingError
+    
+    var errorDescription: String? {
+        switch self {
+        case .invalidURL:
+            return "Invalid adress"
+        case .invalidResponse:
+            return "Please check your internet connection."
+        case .decodingError:
+            return "An error occurred while processing the data."
+        }
+    }
 }
 
 struct CoinService {

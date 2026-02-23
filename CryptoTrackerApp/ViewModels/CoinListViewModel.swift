@@ -55,25 +55,36 @@ final class CoinListViewModel: ObservableObject{
         if reset {
             currentPage = 1
             canLoadMore = true
-            coins = []
+            errorMessage = nil
         }
         
         guard !isLoadingMore, canLoadMore else { return }
         
         isLoadingMore = true
+        errorMessage = nil
         
         do {
             let newCoins = try await service.fetchCoins(page: currentPage)
             
-            if newCoins.isEmpty {
+            if reset {
+                coins = newCoins
+            } else if newCoins.isEmpty {
                 canLoadMore = false
             } else {
                 coins.append(contentsOf: newCoins)
+            }
+            
+            if !newCoins.isEmpty {
                 currentPage += 1
+            } else if reset {
+                canLoadMore = false
             }
             
         } catch {
             errorMessage = error.localizedDescription
+            if reset {
+                canLoadMore = !coins.isEmpty
+            }
         }
         
         isLoadingMore = false
