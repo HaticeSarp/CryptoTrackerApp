@@ -31,6 +31,10 @@ final class CoinListViewModel: ObservableObject{
     private var canLoadMore = true
     private let service = CoinService()
     
+    var hasReachedEnd: Bool {
+        !canLoadMore && !coins.isEmpty && errorMessage == nil
+    }
+    
     var filteredCoins : [Coin] {
         if searchText.isEmpty {
             return coins
@@ -84,6 +88,8 @@ final class CoinListViewModel: ObservableObject{
             errorMessage = error.localizedDescription
             if reset {
                 canLoadMore = !coins.isEmpty
+            } else {
+                canLoadMore = false
             }
         }
         

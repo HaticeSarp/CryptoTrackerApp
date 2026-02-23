@@ -48,12 +48,8 @@ private extension CoinListView {
             loadingView
         }
         
-        else if let error = viewModel.errorMessage {
-            centeredStateView(
-                title: "Something went wrong",
-                systemImage: "exclamationmark.triangle",
-                description: error
-            )
+        else if let error = viewModel.errorMessage, viewModel.coins.isEmpty {
+            errorStateView(description: error)
         }
         
         else if viewModel.filteredCoins.isEmpty && !viewModel.searchText.isEmpty {
@@ -109,8 +105,69 @@ private extension CoinListView {
                 .listRowSeparator(.hidden)
                 .listRowBackground(Color.clear)
             }
+            if let error = viewModel.errorMessage, !viewModel.coins.isEmpty {
+                HStack {
+                    Image(systemName: "exclamationmark.circle.fill")
+                        .foregroundStyle(.orange)
+                    Text(error)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+                .listRowSeparator(.hidden)
+                .listRowBackground(Color.clear)
+                .padding()
+            }
+            if viewModel.isLoadingMore {
+                HStack {
+                    Spacer()
+                    ProgressView()
+                    Spacer()
+                }
+                .listRowBackground(Color.clear)
+                .padding()
+            }
+            if viewModel.hasReachedEnd {
+                Text("You've seen all coins")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .padding()
+            }
         }
         .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .background(Color(.systemGroupedBackground))
+        .refreshable {
+            await viewModel.fetchCoins(reset: true)
+        }
+    }
+}
+
+// MARK: - Error State View (supports pull-to-refresh and retry when initial load fails)
+private extension CoinListView {
+    
+    func errorStateView(description: String) -> some View {
+        ScrollView {
+            VStack(spacing: 24) {
+                Spacer(minLength: 80)
+                ContentUnavailableView(
+                    "Something went wrong",
+                    systemImage: "exclamationmark.triangle",
+                    description: Text(description)
+                )
+                Button("Retry") {
+                    Task {
+                        await viewModel.fetchCoins(reset: true)
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                Spacer(minLength: 80)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
         .scrollContentBackground(.hidden)
         .background(Color(.systemGroupedBackground))
         .refreshable {
