@@ -8,6 +8,7 @@ import SwiftUI
 
 struct CoinDetailView: View {
     let coin: Coin
+    @EnvironmentObject var favoritesManager: FavoritesManager
     
     var body: some View {
         ScrollView{
@@ -58,6 +59,14 @@ struct CoinDetailView: View {
             .padding()
         }
         .navigationTitle(coin.name)
+        .toolbar {
+            Button {
+                favoritesManager.toggleFavorite(id: coin.id)
+            } label: {
+                Image(systemName: favoritesManager.isFavorite(id: coin.id) ? "star.fill" : "star")
+                    .foregroundStyle(.yellow)
+            }
+        }
         .navigationBarTitleDisplayMode(.inline)
     }
 }

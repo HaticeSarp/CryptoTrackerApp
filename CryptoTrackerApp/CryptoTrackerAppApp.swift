@@ -12,11 +12,13 @@ import Combine
 struct CryptoTrackerAppApp: App {
     
     @StateObject private var themeManager = ThemeManager()
+    @StateObject private var favoritesManager = FavoritesManager()
 
     var body: some Scene {
         WindowGroup {
             CoinListView()
                 .environmentObject(themeManager)
+                .environmentObject(favoritesManager)
                 .preferredColorScheme(colorScheme)
         }
     }

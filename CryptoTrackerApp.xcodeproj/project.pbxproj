@@ -6,8 +6,13 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		139E2DAC2F4C3831006841E1 /* README.md in Resources */ = {isa = PBXBuildFile; fileRef = 139E2DAB2F4C3831006841E1 /* README.md */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		139E2D622F45DD6B006841E1 /* CryptoTrackerApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CryptoTrackerApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		139E2DAB2F4C3831006841E1 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -32,6 +37,7 @@
 		139E2D592F45DD6B006841E1 = {
 			isa = PBXGroup;
 			children = (
+				139E2DAB2F4C3831006841E1 /* README.md */,
 				139E2D632F45DD6B006841E1 /* Products */,
 				139E2D642F45DD6B006841E1 /* CryptoTrackerApp */,
 			);
@@ -109,6 +115,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				139E2DAC2F4C3831006841E1 /* README.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

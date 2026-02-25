@@ -222,6 +222,7 @@ private struct CoinListFooterView: View {
 // MARK: - Coin Row
 private struct CoinRowView: View {
     let coin: Coin
+    @EnvironmentObject var favoritesManager: FavoritesManager
 
     var body: some View {
         HStack(spacing: 12) {
@@ -230,6 +231,7 @@ private struct CoinRowView: View {
             nameAndSymbol
             Spacer()
             priceAndChange
+            favoriteButton
         }
         .padding(.vertical, 4)
         .background(
@@ -296,6 +298,16 @@ private struct CoinRowView: View {
         if trillion >= 1 { return String(format: "%.2fT", trillion) }
         if billion >= 1 { return String(format: "%.2fB", billion) }
         return String(format: "%.2fM", million)
+    }
+    
+    private var favoriteButton: some View {
+        Button {
+            favoritesManager.toggleFavorite(id: coin.id)
+         } label: {
+             Image(systemName: favoritesManager.isFavorite(id: coin.id) ? "star.fill" : "star")
+                 .foregroundStyle(favoritesManager.isFavorite(id: coin.id) ? .yellow : .gray)
+         }
+         .buttonStyle(.plain)
     }
 }
 
