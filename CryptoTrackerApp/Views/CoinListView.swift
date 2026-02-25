@@ -220,7 +220,7 @@ private struct CoinListFooterView: View {
 }
 
 // MARK: - Coin Row
-private struct CoinRowView: View {
+struct CoinRowView: View {
     let coin: Coin
     @EnvironmentObject var favoritesManager: FavoritesManager
 

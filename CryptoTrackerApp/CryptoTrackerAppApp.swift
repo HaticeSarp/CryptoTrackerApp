@@ -13,24 +13,32 @@ struct CryptoTrackerAppApp: App {
     
     @StateObject private var themeManager = ThemeManager()
     @StateObject private var favoritesManager = FavoritesManager()
-
+    
     var body: some Scene {
         WindowGroup {
-            CoinListView()
-                .environmentObject(themeManager)
-                .environmentObject(favoritesManager)
-                .preferredColorScheme(colorScheme)
+            TabView{
+                CoinListView()
+                    .environmentObject(themeManager)
+                   
+                    .preferredColorScheme(colorScheme)
+                
+                FavoritesView()
+                    .tabItem {
+                        Label("Favorites", systemImage: "star.fill")
+                    }
+            }
+            .environmentObject(favoritesManager)
         }
     }
     
-     private var colorScheme: ColorScheme? {
-         switch themeManager.selectedTheme {
-         case .system:
-             return nil
-         case .light:
-             return .light
-         case .dark:
-             return .dark
-         }
-     }
+    private var colorScheme: ColorScheme? {
+        switch themeManager.selectedTheme {
+        case .system:
+            return nil
+        case .light:
+            return .light
+        case .dark:
+            return .dark
+        }
+    }
 }
